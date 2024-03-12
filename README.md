@@ -1,4 +1,4 @@
 # Implantación e implementación de Sistemas Software
 ## 3º Curso Ingeniería informática UCA
-### Prácticas
+### Problemas
   1. Herencia, delegación y polimorfismo
