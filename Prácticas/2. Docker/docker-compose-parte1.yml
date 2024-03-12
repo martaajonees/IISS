@@ -1,0 +1,26 @@
+
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: drupal
+      MYSQL_USER: drupal
+      MYSQL_PASSWORD: drupalpass
+      MYSQL_ROOT_PASSWORD: rootpass
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  drupal:
+    image: drupal:latest
+    restart: always
+    ports:
+      - "81:81"
+    volumes:
+      - drupal_data:/var/www/html
+
+volumes:
+  mysql_data:
+  drupal_data:
