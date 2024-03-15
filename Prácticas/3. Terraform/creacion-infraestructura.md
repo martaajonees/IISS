@@ -5,9 +5,11 @@ terraform un archivo de configuración `.tf` con la plataforma que queramos, en 
 
 Se añadirá de la siguiente forma:
 <div align="center">
-  <img src="https://github.com/martaajonees/IISS/assets/100365874/bd3069b8-7198-473a-96d5-601823baf9cd" alt="Texto alternativo" />
+  <img src="https://github.com/martaajonees/IISS/assets/100365874/86a66e8e-e309-4630-92e2-86cd357e8aff" alt="Texto alternativo" />
   <p>Figura 1. Creación de archivo de configuración </p>
 </div>
+
+
 
 Ahora añadimos el siguiente contenido a dicho archivo:
 ```terraform
@@ -118,8 +120,99 @@ Ahora podemos conprobar que en la dirección [http:](http://localhost:8001/)http
 configuración de WordPress.
 <div align="center">
   <img src="https://github.com/martaajonees/IISS/assets/100365874/b9972e77-156d-4e05-9c60-90f38733c562" alt="Texto alternativo" style="width: 75%;" />
-  <p> Figura 4. Creamos nuestra infraestructura</p>
+  <p> Figura 5. La infraestructura funciona de manera correcta</p>
 </div>
+
+#### Variables de entorno
+Podemos definirle variables de entorno creando un nuevo archivo de configuración llamado `variables.tf` cuyo contenido será el siguiente:
+<div align="center">
+  <img src="https://github.com/martaajonees/IISS/assets/100365874/0283e4bf-7898-4346-a6cb-4db046e16628" alt="Texto alternativo"/>
+  <p> Figura 6. Archivo de variables de entorno</p>
+</div>
+
+Por último modificamos el archivo de configuración principal `wordpress.tf` como se muestra abajo y aplicamos pasos 4 y 5 de este documento. EL archivo sigue funcionando de igual forma.
+```terraform
+terraform {
+  required_providers {
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "~> 3.0.1"
+    }
+  }
+}
+
+provider "docker" {}
+
+// Instanciamos la imagen de mariadb
+resource "docker_image" "mariadb" {
+  name         = "mariadb:latest"
+  keep_locally = false
+}
+
+// Instanciamos el contenedor de mariadb
+resource "docker_container" "mariadb" {
+  image = docker_image.mariadb.image_id
+  name  = "mariadb"
+  ports {
+    internal = 3306
+    external = 3306
+  }
+  env = [
+    "MYSQL_ROOT_PASSWORD=admin",
+    "MYSQL_DATABASE=wordpress",
+    "MYSQL_USER=wordpress",
+    "MYSQL_PASSWORD=admin"
+  ]
+  networks_advanced {
+    name = docker_network.miRed.name
+  }
+  volumes {
+    volume_name    = docker_volume.miVolumen.name
+    container_path = "/var/www/html"
+  }
+}
+
+// Instanciamos la imagen de docker
+resource "docker_image" "wordpress" {
+  name         = "wordpress:latest"
+  keep_locally = false
+}
+
+// Instanciamos el contenedor de wordpress
+resource "docker_container" "wordpress" {
+  image = docker_image.wordpress.image_id
+  name  = "${var.container_name}"
+  ports {
+    internal = 80
+    external = 8001
+  }
+  env = [
+    "WORDPRESS_DB_HOST=mariadb:3306",
+    "WORDPRESS_DB_USER=wordpress",
+    "WORDPRESS_DB_PASSWORD=admin",
+  ]
+  depends_on = [docker_container.mariadb]
+  networks_advanced {
+    name = docker_network.miRed.name
+  }
+  volumes {
+    volume_name    = docker_volume.miVolumen.name
+    container_path = "/var/www/html"
+  }
+}
+
+//Creamos una red Docker para que los contenedores se comuniquen
+resource "docker_network" "miRed" {
+  name = "mi-red-docker"
+}
+
+//Creamos un recurso para el volumen de datos
+resource "docker_volume" "miVolumen" {
+  name = "mi-volumen-docker"
+}
+```
+
+
 
 
 
